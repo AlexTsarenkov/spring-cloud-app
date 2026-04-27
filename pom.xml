@@ -24,7 +24,6 @@
         <module>transfer-service</module>
         <module>notifications-service</module>
         <module>gateway-api</module>
-        <module>zookeeper-service</module>
     </modules>
 
     <properties>
