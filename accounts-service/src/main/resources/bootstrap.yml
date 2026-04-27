@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: accounts-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      retry:
+        max-attempts: 5
+        initial-interval: 2000
+    zookeeper:
+      connect-string: zookeeper:2181
+
+management:
+  health:
+    config:
+      enabled: true

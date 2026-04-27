@@ -1,0 +1,14 @@
+logging:
+  level:
+    com.bank.notifications: DEBUG
+
+spring:
+  cloud:
+    zookeeper:
+      connect-string: zookeeper:2181
+      discovery:
+        enabled: true
+        register: true
+
+server:
+  port: 8084

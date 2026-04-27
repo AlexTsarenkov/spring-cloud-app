@@ -1,0 +1,15 @@
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank_db
+    username: bank_user
+    password: bank_pass
+  cloud:
+    zookeeper:
+      connect-string: zookeeper:2181
+      discovery:
+        enabled: true
+        register: true
+
+server:
+  port: 8083
