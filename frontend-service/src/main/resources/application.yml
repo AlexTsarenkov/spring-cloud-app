@@ -1,0 +1,19 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+            user-name-attribute: "preferred_username"
+        registration:
+          keycloak:
+            provider: "keycloak"
+            client-id: ${KEYCLOAK_CLIENT_ID:bank-app}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: "authorization_code"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: "openid,profile,email"
