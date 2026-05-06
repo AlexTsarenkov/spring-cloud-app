@@ -1,0 +1,193 @@
+version: "3.9"
+
+services:
+  zookeeper:
+    image: zookeeper:3.9.3
+    container_name: bank-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+    ports:
+      - "2181:2181"
+    networks:
+      - bank-network
+
+  postgres:
+    image: postgres:16
+    container_name: bank-postgres
+    environment:
+      POSTGRES_DB: bank_app
+      POSTGRES_USER: bankuser
+      POSTGRES_PASSWORD: bankuser
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - bank-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: bank-keycloak
+    command:
+      - start-dev
+      - --http-port=9990
+      - --hostname-strict=false
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: host.docker.internal
+    ports:
+      - "9990:9990"
+    networks:
+      - bank-network
+
+  config-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: config-server
+    container_name: bank-config-server
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+    depends_on:
+      - zookeeper
+    ports:
+      - "8888:8888"
+    networks:
+      - bank-network
+
+  accounts-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: accounts-service
+    container_name: bank-accounts
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+      DB_USERNAME: bankuser
+    depends_on:
+      - zookeeper
+      - config-server
+      - postgres
+    ports:
+      - "8081:8081"
+    networks:
+      - bank-network
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: notifications-service
+    container_name: bank-notifications
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+    depends_on:
+      - zookeeper
+      - config-server
+    ports:
+      - "8084:8084"
+    networks:
+      - bank-network
+
+  cash-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: cash-service
+    container_name: bank-cash
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+      KEYCLOAK_CASH_SERVICE_ID: cash-service
+      CASH_SERVICE_CLIENT_SECRET: ${CASH_SERVICE_CLIENT_SECRET}
+    depends_on:
+      - zookeeper
+      - config-server
+      - accounts-service
+      - notifications-service
+    ports:
+      - "8082:8082"
+    networks:
+      - bank-network
+
+  transfer-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: transfer-service
+    container_name: bank-transfer
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+      KEYCLOAK_TRANSFER_SERVICE_ID: transfer_service
+      TRANSFER_SERVICE_CLIENT_SECRET: ${TRANSFER_SERVICE_CLIENT_SECRET}
+    depends_on:
+      - zookeeper
+      - config-server
+      - accounts-service
+      - notifications-service
+    ports:
+      - "8083:8083"
+    networks:
+      - bank-network
+
+  gateway-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: gateway-api
+    container_name: bank-gateway
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+    depends_on:
+      - zookeeper
+      - config-server
+      - accounts-service
+      - cash-service
+      - transfer-service
+      - notifications-service
+    ports:
+      - "8086:8086"
+    networks:
+      - bank-network
+
+  frontend-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: frontend-service
+    container_name: bank-frontend
+    environment:
+      ZOOKEEPER_CONNECT_STRING: zookeeper:2181
+      KEYCLOAK_URI: http://host.docker.internal:9990/realms/bank-realm
+      KEYCLOAK_CLIENT_ID: bank-app
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_GATEWAY_ID: gateway_service
+      GATEWAY_SERVICE_CLIENT_SECRET: ${GATEWAY_SERVICE_CLIENT_SECRET}
+    depends_on:
+      - zookeeper
+      - config-server
+      - gateway-api
+    ports:
+      - "8080:8080"
+    networks:
+      - bank-network
+
+networks:
+  bank-network:
+    driver: bridge
+
+volumes:
+  pg-data:
