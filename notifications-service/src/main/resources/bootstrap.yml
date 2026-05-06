@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: "optional:configserver:,optional:zookeeper:"
   application:
     name: notification-service
   cloud:
@@ -9,7 +11,7 @@ spring:
         max-attempts: 5
         initial-interval: 2000
     zookeeper:
-      connect-string: zookeeper:2181
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
 
 management:
   health:

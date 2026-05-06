@@ -1,15 +1,28 @@
-
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/bank_db
-    username: bank_user
-    password: bank_pass
   cloud:
     zookeeper:
-      connect-string: zookeeper:2181
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
       discovery:
         enabled: true
         register: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+        registration:
+          transfer-service-client-credentials:
+            provider: keycloak
+            client-id: ${KEYCLOAK_TRANSFER_SERVICE_ID:transfer_service}
+            client-secret: ${TRANSFER_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+
+accounts:
+  base-url: http://accounts-service
 
 server:
   port: 8083

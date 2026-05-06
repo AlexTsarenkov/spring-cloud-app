@@ -9,20 +9,27 @@
 </head>
 
 <body class="bg-light">
+    <header class="navbar navbar-expand navbar-light bg-white border-bottom shadow-sm">
+        <div class="container-fluid px-3">
+            <a class="navbar-brand d-flex align-items-center gap-2 mb-0" th:href="@{/account}">
+                <span class="badge text-bg-info">Банк</span>
+            </a>
+            <div class="navbar-nav ms-auto flex-row align-items-center gap-3">
+                <span class="navbar-text py-0" th:if="${currentUsername != null}">
+                    <span class="text-muted small">Пользователь:</span>
+                    <span class="fw-semibold ms-1" th:text="${currentUsername}">username</span>
+                </span>
+                <form class="d-inline" th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Выйти</button>
+                </form>
+            </div>
+        </div>
+    </header>
     <div class="alert alert-danger vstack" role="alert" th:if="${errors!=null}" th:each="error : ${errors}">
         <span th:text="${error}"/>
     </div>
     <div class="alert alert-success" role="alert" th:if="${info!=null}" th:text="${info}"/>
     <div class="container p-2">
-        <div class="row p-2">
-            <div class="col">
-                <div class="hstack gap-3">
-                    <h2>
-                        <span class="badge text-bg-info text-white">Банк</span>
-                    </h2>
-                </div>
-            </div>
-        </div>
         <div class="row p-2">
             <div class="col">
                 <div class="card">
@@ -94,7 +101,7 @@
                                 </h6>
                                 <p>
                                     <select class="form-select" id="to_account" name="login" required>
-                                        <option th:each="account : ${accounts}" th:value="${account.login}" th:text="${account.name}"/>
+                                        <option th:each="account : ${accounts}" th:value="${account.getLogin()}" th:text="${account.getName()}"/>
                                     </select>
                                 </p>
                             </div>

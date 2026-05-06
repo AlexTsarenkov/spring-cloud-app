@@ -1,16 +1,20 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/bank_db
-    username: bank_user
-    password: bank_pass
+    url: jdbc:postgresql://localhost:5432/bank_app
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_USERNAME:admin}
     driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  sql:
+    init:
+      mode: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
   cloud:
     zookeeper:
-      connect-string: zookeeper:2181
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
       discovery:
         enabled: true
         register: true

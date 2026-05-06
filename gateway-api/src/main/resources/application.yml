@@ -1,0 +1,44 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: application-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: account-service
+              uri: lb://accounts-service
+              predicates:
+                - Path=/account-service/**
+              filters:
+                - RewritePath=/account-service/?(?<segment>.*), /$\{segment}
+            - id: cash-service
+              uri: lb://cash-service
+              predicates:
+                - Path=/cash-service/**
+              filters:
+                - RewritePath=/cash-service/?(?<segment>.*), /$\{segment}
+                - name: JwtTokenRelay
+            - id: transfer-service
+              uri: lb://transfer-service
+              predicates:
+                - Path=/transfer-service/**
+              filters:
+                - RewritePath=/transfer-service/?(?<segment>.*), /$\{segment}
+                - name: JwtTokenRelay
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/notification-service/**
+              filters:
+                - RewritePath=/notification-service/?(?<segment>.*), /$\{segment}
+                - name: JwtTokenRelay
+
+
