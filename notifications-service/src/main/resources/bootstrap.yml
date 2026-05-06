@@ -2,7 +2,7 @@ spring:
   config:
     import: "optional:configserver:,optional:zookeeper:"
   application:
-    name: notification-service
+    name: notifications-service
   cloud:
     config:
       uri: http://localhost:8888

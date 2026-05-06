@@ -1,5 +1,6 @@
 package ru.yandex.practicum.accounts.controller;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -55,7 +56,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/accounts", produces = MediaType.APPLICATION_JSON_VALUE)
-    public UserData updateUserData(@RequestBody UserDataUpdateDto userData) {
+    public UserData updateUserData(@Valid @RequestBody UserDataUpdateDto userData) {
         UserData existingUserData = userDataService.getUserDataOrNotFound(userData.getUsername());
         existingUserData.setNameSurename(userData.getNameSurename());
         existingUserData.setBirthdate(userData.getBirthdate());
@@ -63,7 +64,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/accounts/cash")
-    public void cashAccount(@RequestBody CashActionDto cashActionDto) {
+    public void cashAccount(@Valid @RequestBody CashActionDto cashActionDto) {
         switch (cashActionDto.getAction()) {
             case GET ->
                     accountService.substractCashFromBalance(cashActionDto.getAccountNumber(), cashActionDto.getBalance());
@@ -72,7 +73,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "accounts/transfer")
-    public void transferCash(@RequestBody TransferActionDto transferActionDto) {
+    public void transferCash(@Valid @RequestBody TransferActionDto transferActionDto) {
         accountService.transferCash(transferActionDto.getFromAccountId(), transferActionDto.getToAccountId(),
                 transferActionDto.getAmount());
     }

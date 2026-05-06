@@ -57,4 +57,14 @@ public class AccountsClientConfig {
                 .baseUrl(accountsServiceBaseUrl)
                 .build();
     }
+
+    @Bean
+    RestClient notificationsRestClient(
+            @LoadBalanced RestClient.Builder builder,
+            @Value("${notifications.base-url}") String notificationsBaseUrl
+    ) {
+        return builder
+                .baseUrl(notificationsBaseUrl)
+                .build();
+    }
 }

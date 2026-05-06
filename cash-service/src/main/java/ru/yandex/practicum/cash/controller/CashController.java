@@ -1,5 +1,6 @@
 package ru.yandex.practicum.cash.controller;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +14,7 @@ public class CashController {
     private final CashService cashService;
 
     @PostMapping("/cash")
-    public void editCash(@RequestBody CashActionDto cashActionDto) {
+    public void editCash(@Valid @RequestBody CashActionDto cashActionDto) {
         cashService.submitCashOperation(cashActionDto);
     }
 }

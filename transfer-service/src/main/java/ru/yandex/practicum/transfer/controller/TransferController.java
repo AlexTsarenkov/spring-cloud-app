@@ -1,5 +1,6 @@
 package ru.yandex.practicum.transfer.controller;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +14,7 @@ public class TransferController {
     private final TransferService transferService;
 
     @PostMapping("/transfer")
-    public void editCash(@RequestBody TransferActionDto transferActionDto) {
+    public void editCash(@Valid @RequestBody TransferActionDto transferActionDto) {
         transferService.submitTransferOperation(transferActionDto);
     }
 }

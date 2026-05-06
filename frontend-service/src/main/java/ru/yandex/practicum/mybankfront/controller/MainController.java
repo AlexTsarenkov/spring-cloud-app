@@ -7,7 +7,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.yandex.practicum.mybankfront.dto.Account;
 import ru.yandex.practicum.mybankfront.dto.AccountResponse;
@@ -74,17 +76,11 @@ public class MainController {
         );
 
         UserData user = response.getUserData();
-        String name = "";
-        String birthdate = "";
-        if (user != null) {
-            name = user.getNameSurename() != null ? user.getNameSurename() : "";
-            if (user.getBirthdate() != null) {
-                birthdate = user.getBirthdate().format(DateTimeFormatter.ISO_LOCAL_DATE);
-            }
-        }
-        int sum = response.getAccount() != null && response.getAccount().getBalance() != null
-                ? (int) Math.round(response.getAccount().getBalance())
-                : 0;
+        String name = user.getNameSurename();
+        String birthdate = user.getBirthdate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        int sum = (int) Math.round(response.getAccount().getBalance());
+
         List<UserToTransfer> usersToTransfer = response.getUsersToTransfer().stream()
                 .map(ud -> new UserToTransfer(ud.getUsername(), ud.getNameSurename()))
                 .toList();
@@ -113,7 +109,8 @@ public class MainController {
             Model model,
             @RequestParam("name") String name,
             @RequestParam("birthdate") LocalDate birthdate,
-            Authentication authentication
+            Authentication authentication,
+            RedirectAttributes redirectAttributes
     ) {
         UserDataUpdateDto userToUpdate = UserDataUpdateDto.builder()
                 .username(authentication.getName())
@@ -121,12 +118,20 @@ public class MainController {
                 .birthdate(birthdate)
                 .build();
 
-        securityService.postWithUserToken(
-                "/account-service/accounts",
-                UserData.class,
-                authentication,
-                userToUpdate
-        );
+        try {
+            securityService.postWithUserToken(
+                    "/account-service/accounts",
+                    UserData.class,
+                    authentication,
+                    userToUpdate
+            );
+        } catch (RestClientResponseException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "errors",
+                    List.of("Что-то пошло не так в account-service")
+            );
+            return new RedirectView("/account");
+        }
         return new RedirectView("/account");
     }
 
@@ -145,7 +150,8 @@ public class MainController {
     public RedirectView editCash(
             Authentication authentication,
             @RequestParam("value") Double value,
-            @RequestParam("action") CashAction action
+            @RequestParam("action") CashAction action,
+            RedirectAttributes redirectAttributes
     ) {
         AccountResponse response = securityService.getWithUserToken(
                 "/account-service/accounts",
@@ -153,20 +159,38 @@ public class MainController {
                 authentication
         );
         Account account = response.getAccount();
-        if (account.getBalance() < value && account.equals(CashAction.GET)) {
-
+        if (response.getAccount().getBalance() < value && action.equals(CashAction.GET)) {
+            redirectAttributes.addFlashAttribute("errors",
+                    "Недостаточно средств"
+            );
+            return new RedirectView("/account");
         }
+
         CashActionDto body = CashActionDto.builder()
                 .accountNumber(account.getAccountNumber())
                 .action(action)
                 .balance(value)
                 .build();
 
-        securityService.postWithUserToken(
-                "/cash-service/cash",
-                Void.class,
-                authentication,
-                body
+        try {
+            securityService.postWithUserToken(
+                    "/cash-service/cash",
+                    Void.class,
+                    authentication,
+                    body
+            );
+        } catch (RestClientResponseException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "errors",
+                    List.of("Что-то пошло не так в cash-service")
+            );
+            return new RedirectView("/account");
+        }
+
+        String actionText = action == CashAction.PUT ? "пополнили" : "сняли";
+
+        redirectAttributes.addFlashAttribute("info",
+                String.format("Успешно %s %.2f рублей", actionText, value)
         );
 
         return new RedirectView("/account");
@@ -187,13 +211,21 @@ public class MainController {
     public RedirectView transfer(
             Authentication authentication,
             @RequestParam("value") Double value,
-            @RequestParam("login") String login
+            @RequestParam("login") String login,
+            RedirectAttributes redirectAttributes
     ) {
         AccountResponse currentAccount = securityService.getWithUserToken(
                 "/account-service/accounts",
                 AccountResponse.class,
                 authentication
         );
+
+        if (currentAccount.getAccount().getBalance() < value) {
+            redirectAttributes.addFlashAttribute("errors",
+                    "Недостаточно средств"
+            );
+            return new RedirectView("/account");
+        }
 
         AccountResponse transferAccount = securityService.getWithUserToken(
                 String.format("/account-service/accounts/%s", login),
@@ -207,12 +239,30 @@ public class MainController {
                 .amount(value)
                 .build();
 
-        securityService.postWithUserToken(
-                "/transfer-service/transfer",
-                Void.class,
-                authentication,
-                transferActionDto);
+        try {
+            securityService.postWithUserToken(
+                    "/transfer-service/transfer",
+                    Void.class,
+                    authentication,
+                    transferActionDto
+            );
+        } catch (RestClientResponseException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "errors",
+                    List.of("Что-то пошло не так в transfer-service")
+            );
+            return new RedirectView("/account");
+        }
 
-        return new RedirectView("/account");
+        redirectAttributes.addFlashAttribute(
+                "info",
+                String.format("Вы успешно перевели %.2f рублей %s", value, transferAccount.getUserData().
+
+                        getNameSurename())
+        );
+
+        return new
+
+                RedirectView("/account");
     }
 }

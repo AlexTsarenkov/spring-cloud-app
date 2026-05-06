@@ -23,6 +23,8 @@ spring:
 
 accounts:
   base-url: http://accounts-service
+notifications:
+  base-url: http://notifications-service
 
 server:
   port: 8083

@@ -14,6 +14,7 @@ import org.springframework.web.client.RestClient;
 @AllArgsConstructor
 public class TransferService {
     private final RestClient accountsRestClient;
+    private final RestClient notificationsRestClient;
     private final OAuth2AuthorizedClientManager authorizedClientManager;
 
     public void submitTransferOperation(Object body) {
@@ -30,11 +31,20 @@ public class TransferService {
         if (client == null || client.getAccessToken() == null) {
             throw new IllegalStateException("Cannot obtain access token for service request");
         }
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        notificationsRestClient
+                .post()
+                .uri("/notification")
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .body("выполняю submitTransferOperation в сервисе transfer-service")
+                .retrieve()
+                .toBodilessEntity();
 
         accountsRestClient
                 .post()
                 .uri("/accounts/transfer")
-                .headers(headers -> headers.setBearerAuth(client.getAccessToken().getTokenValue()))
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .body(body)
                 .retrieve()
                 .toBodilessEntity();
