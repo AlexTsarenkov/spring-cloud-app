@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank_app
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_USERNAME:admin}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+  cloud:
+    zookeeper:
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
+      discovery:
+        enabled: true
+        register: true
+
+server:
+  port: 8081

@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: accounts-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}

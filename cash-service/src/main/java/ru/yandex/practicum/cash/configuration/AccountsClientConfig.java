@@ -1,0 +1,70 @@
+package ru.yandex.practicum.cash.configuration;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.web.client.RestClient;
+
+@Configuration
+public class AccountsClientConfig {
+
+    @Bean
+    public OAuth2AuthorizedClientService authorizedClientService(
+            ClientRegistrationRepository clientRegistrationRepository
+    ) {
+        return new InMemoryOAuth2AuthorizedClientService(clientRegistrationRepository);
+    }
+
+    @Bean
+    public OAuth2AuthorizedClientManager authorizedClientManager(
+            ClientRegistrationRepository clientRegistrationRepository,
+            OAuth2AuthorizedClientService authorizedClientService
+    ) {
+        OAuth2AuthorizedClientProvider authorizedClientProvider =
+                OAuth2AuthorizedClientProviderBuilder.builder()
+                        .clientCredentials()
+                        .build();
+
+        AuthorizedClientServiceOAuth2AuthorizedClientManager manager =
+                new AuthorizedClientServiceOAuth2AuthorizedClientManager(
+                        clientRegistrationRepository,
+                        authorizedClientService
+                );
+        manager.setAuthorizedClientProvider(authorizedClientProvider);
+        return manager;
+    }
+
+    @Bean
+    @LoadBalanced
+    RestClient.Builder loadBalancedRestClientBuilder() {
+        return RestClient.builder();
+    }
+
+    @Bean
+    RestClient accountsRestClient(
+            @LoadBalanced RestClient.Builder builder,
+            @Value("${accounts.base-url}") String accountsServiceBaseUrl
+    ) {
+        return builder
+                .baseUrl(accountsServiceBaseUrl)
+                .build();
+    }
+
+    @Bean
+    RestClient notificationsRestClient(
+            @LoadBalanced RestClient.Builder builder,
+            @Value("${notifications.base-url}") String notificationsBaseUrl
+    ) {
+        return builder
+                .baseUrl(notificationsBaseUrl)
+                .build();
+    }
+}

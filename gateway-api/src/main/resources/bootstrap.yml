@@ -1,0 +1,10 @@
+spring:
+  config:
+    import: "optional:configserver:,optional:zookeeper:"
+  application:
+    name: application-gateway
+  cloud:
+    config:
+      uri: http://localhost:8888
+    zookeeper:
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}

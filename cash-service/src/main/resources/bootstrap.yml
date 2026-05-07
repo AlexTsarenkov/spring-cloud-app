@@ -1,0 +1,19 @@
+spring:
+  config:
+    import: "optional:configserver:,optional:zookeeper:"
+  application:
+    name: cash-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      retry:
+        max-attempts: 5
+        initial-interval: 2000
+    zookeeper:
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
+
+management:
+  health:
+    config:
+      enabled: true

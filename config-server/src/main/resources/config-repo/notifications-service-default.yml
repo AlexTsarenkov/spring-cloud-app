@@ -1,0 +1,29 @@
+logging:
+  level:
+    com.bank.notifications: DEBUG
+
+spring:
+  cloud:
+    zookeeper:
+      connect-string: ${ZOOKEEPER_CONNECT_STRING:localhost:2181}
+      discovery:
+        enabled: true
+        register: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://localhost:9990/realms/bank-realm}
+        registration:
+          notification-service-client-credentials:
+            provider: keycloak
+            client-id: ${KEYCLOAK_NOTIFICATION_SERVICE_ID:notification_service}
+            client-secret: ${NOTIFICATION_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+
+server:
+  port: 8084
